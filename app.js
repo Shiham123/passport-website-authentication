@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const ejs = require('ejs');
 const app = express();
+require('./config/database');
+const user = require('./Model/user.model');
 
 app.set('view engine', 'ejs');
 app.use(cors());
@@ -12,41 +14,39 @@ app.get('/', (request, response) => {
   response.status(200).render('index');
 });
 
+// --------------------------------------------------
+
 app.get('/register', (request, response) => {
+  response.status(200).render('register');
+});
+
+app.post('/register', async (request, response) => {
   try {
-    response.status(200).render('register');
+    const existingUser = await user.findOne({
+      username: request.body.username,
+    });
+    if (existingUser) return response.status(400).send('user is already exits');
+
+    const newUser = new user(request.body);
+    await newUser.save();
+    response.status(201).redirect('/login');
   } catch (error) {
-    response.status(404).json({ message: 'file not found' });
+    response.status(500).send('post not found');
   }
 });
 
-// app.post('/register', (request, response) => {});
+// --------------------------------------------------
 
 app.get('/login', (request, response) => {
-  try {
-    response.status(200).render('login');
-  } catch (error) {
-    response.status(404).json({ message: 'file not found' });
-  }
+  response.status(200).render('login');
 });
 
 app.get('/profile', (request, response) => {
-  try {
-    response.status(200).render('profile');
-  } catch (error) {
-    response.status(404).json({ message: 'file not found' });
-  }
+  response.status(200).render('profile');
 });
 
 app.get('/logout', (request, response) => {
-  try {
-    response.status(200).render('logout');
-  } catch (error) {
-    response.status(404).json({ message: 'file not found' });
-  }
+  response.render('index');
 });
-// app.post('/login', (request, response) => {});
-
-app.get('/profile', (request, response) => {});
 
 module.exports = app;
