@@ -81,7 +81,14 @@ app.post('/register', async (request, response) => {
 
 // ! get method and post method for login route
 
-app.get('/login', (request, response) => {
+const checkLoggedIn = (request, response, next) => {
+  if (request.isAuthenticated()) {
+    return response.redirect('/profile');
+  }
+  next();
+};
+
+app.get('/login', checkLoggedIn, (request, response) => {
   response.status(200).render('login');
 });
 
@@ -95,12 +102,25 @@ app.post(
 
 // ! profile route
 
-app.get('/profile', (request, response) => {
-  response.status(200).render('profile');
+const checkProfileAuthenticated = (request, response, next) => {
+  if (request.isAuthenticated()) return next();
+  else response.redirect('/login');
+};
+
+app.get('/profile', checkProfileAuthenticated, (request, response) => {
+  response.render('profile');
 });
 
+// ! logout route
 app.get('/logout', (request, response) => {
-  response.render('index');
+  try {
+    request.logOut((error) => {
+      if (error) return next(error);
+      response.redirect('/');
+    });
+  } catch (error) {
+    response.status(500).send(error.message);
+  }
 });
 
 module.exports = app;
