@@ -1,3 +1,5 @@
+// ! other import section
+
 const express = require('express');
 const cors = require('cors');
 const ejs = require('ejs');
@@ -16,7 +18,9 @@ const mongoStore = require('connect-mongo');
 require('dotenv').config();
 const dbUrl = process.env.dbUrl;
 
-// ! other import section is upper
+require('./config/passport');
+
+// ! some method declare here form import method
 
 app.set('view engine', 'ejs');
 app.use(cors());
@@ -37,13 +41,16 @@ app.use(
   })
 );
 
-// ! some method declare here form import method
+app.use(passport.initialize());
+app.use(passport.session());
+
+// ! get method for home route
 
 app.get('/', (request, response) => {
   response.status(200).render('index');
 });
 
-// ! get method for home route
+// ! get and post method for register route
 
 app.get('/register', (request, response) => {
   response.status(200).render('register');
@@ -72,11 +79,21 @@ app.post('/register', async (request, response) => {
   }
 });
 
-// ! get method and post method for register route
+// ! get method and post method for login route
 
 app.get('/login', (request, response) => {
   response.status(200).render('login');
 });
+
+app.post(
+  '/login',
+  passport.authenticate('local', {
+    failureRedirect: '/login',
+    successRedirect: '/profile',
+  })
+);
+
+// ! profile route
 
 app.get('/profile', (request, response) => {
   response.status(200).render('profile');
