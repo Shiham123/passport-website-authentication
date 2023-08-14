@@ -4,6 +4,8 @@ const ejs = require('ejs');
 const app = express();
 require('./config/database');
 const user = require('./Model/user.model');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 app.set('view engine', 'ejs');
 app.use(cors());
@@ -22,14 +24,22 @@ app.get('/register', (request, response) => {
 
 app.post('/register', async (request, response) => {
   try {
+    const { username: usernameBody, password: passwordBody } = request.body;
+
     const existingUser = await user.findOne({
-      username: request.body.username,
+      username: usernameBody,
     });
     if (existingUser) return response.status(400).send('user is already exits');
 
-    const newUser = new user(request.body);
-    await newUser.save();
-    response.status(201).redirect('/login');
+    bcrypt.hash(passwordBody, saltRounds, async (error, hash) => {
+      const newUser = new user({
+        username: usernameBody,
+        password: hash,
+      });
+
+      await newUser.save();
+      response.status(201).redirect('/login');
+    });
   } catch (error) {
     response.status(500).send('post not found');
   }
